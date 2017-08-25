@@ -1,6 +1,8 @@
-# A code for testing SSPF.py
-#
-# Lado Samushia (colkhis@gmail.com) August, 2017.
+'''
+ A code for testing SSPF.py
+
+ Lado Samushia (colkhis@gmail.com) August, 2017.
+'''
 
 import unittest
 
@@ -11,6 +13,9 @@ from SSPF import SampleSelect
 
 from os import remove
 
+# These files have only 10 lines and were artificially created by me in such a
+# way that the expected purity of the sample for z>0.3 & type=ELG is 0.75 and
+# the expected completeness for the same selection criteria is 0.5
 catalogue = './test/test.fits'
 random = './test/testran.fits'
 ideal = './test/testid.fits'
