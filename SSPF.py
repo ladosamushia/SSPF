@@ -75,7 +75,8 @@ for criterion in selection:
     else:
         print('WARNING: Do not understand selection criterion', criterion)
     catalogue.meta[column+'_selection'] = criterion
-
+Nsubcat = len(catalogue)
+print(Nsubcat, 'objects were selected from the catalogue')
 
 # Random
 Nrandom = len(random)
@@ -147,7 +148,7 @@ print(Nideal_selected, 'objects were selected from the ideal file')
 Nrand_ideal = len(set(rand_selected).intersection(ideal_selected))
 
 # Compute completeness
-completeness = Nrand_selected/Nrandom
+completeness = Nrand_ideal/Nideal_selected
 print('Completeness =', completeness)
 
 # Purity
