@@ -34,9 +34,13 @@ them. _gt_ means greater, _ls_ means less, and = obviously means equal.
 
 from astropy.io import fits
 from astropy.table import Table
+
 from sys import argv
-import numpy as np
 from sys import exit
+
+from os.path import isfile
+
+import numpy as np
 
 catalogue = argv[1]
 random = argv[2]
@@ -44,13 +48,21 @@ ideal = argv[3]
 output = argv[4]
 selection = argv[5:]
 
+# Be careful not to overwrite existing files
+if isfile(output):
+    print('===============')
+    print('file ' + output + ' exists. Delete it first')
+    print('or change the output filename')
+    print('===============')
+    exit()
+
 catalogue = Table.read(catalogue)
 random = Table.read(random)
 ideal = Table.read(ideal)
 
 # Sub-select binary table based on selection criteria
 for criterion in selection:
-    print('Selcting by', criterion)
+    print('Selecting by', criterion)
     if '_gt_' in criterion:
         column, value = criterion.split('_gt_')
         if column not in catalogue.colnames:
@@ -74,7 +86,7 @@ for criterion in selection:
         catalogue.remove_rows(mask)
     else:
         print('WARNING: Do not understand selection criterion', criterion)
-    catalogue.meta[column+'_selection'] = criterion
+    catalogue.meta[column+'_sel'] = criterion
 Nsubcat = len(catalogue)
 print(Nsubcat, 'objects were selected from the catalogue')
 
@@ -83,7 +95,6 @@ Nrandom = len(random)
 rmask = np.ones(Nrandom)
 
 for criterion in selection:
-    print('Selcting by', criterion)
     if '_gt_' in criterion:
         column, value = criterion.split('_gt_')
         if column not in random.colnames:
@@ -116,7 +127,6 @@ Nideal = len(ideal)
 imask = np.ones(Nideal)
 
 for criterion in selection:
-    print('Selcting by', criterion)
     if '_gt_' in criterion:
         column, value = criterion.split('_gt_')
         if column not in ideal.colnames:
@@ -157,5 +167,5 @@ print('Purity =', purity)
 
 # Save the subsample
 catalogue.meta['purity'] = purity
-catalogue.meta['completeness'] = completeness
+catalogue.meta['complete'] = completeness
 catalogue.write(output)
