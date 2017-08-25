@@ -42,130 +42,137 @@ from os.path import isfile
 
 import numpy as np
 
-catalogue = argv[1]
-random = argv[2]
-ideal = argv[3]
-output = argv[4]
-selection = argv[5:]
+def SampleSelect(catalogue,random,ideal,output,*selection):
+    # Python syntax needs this
+    selection = selection[0]
+    # Be careful not to overwrite existing files
+    if isfile(output):
+        print('===============')
+        print('file ' + output + ' exists. Delete it first')
+        print('or change the output filename')
+        print('===============')
+        exit()
 
-# Be careful not to overwrite existing files
-if isfile(output):
-    print('===============')
-    print('file ' + output + ' exists. Delete it first')
-    print('or change the output filename')
-    print('===============')
-    exit()
+    catalogue = Table.read(catalogue)
+    random = Table.read(random)
+    ideal = Table.read(ideal)
 
-catalogue = Table.read(catalogue)
-random = Table.read(random)
-ideal = Table.read(ideal)
+    # Sub-select binary table based on selection criteria
+    for criterion in selection:
+        print('Selecting by', criterion)
+        if '_gt_' in criterion:
+            column, value = criterion.split('_gt_')
+            if column not in catalogue.colnames:
+                print('WARNING: No column named', column, 'in the catalogue file')
+                continue
+            mask = (catalogue[column] < float(value))
+            catalogue.remove_rows(mask)
+        elif '_ls_' in criterion:
+            column, value = criterion.split('_ls_')
+            if column not in catalogue.colnames:
+                print('WARNING: No column named', column, 'in the catalogue file')
+                continue
+            mask = (catalogue[column] > float(value))
+            catalogue.remove_rows(mask)
+        elif '=' in criterion:
+            column, value = criterion.split('=')
+            if column not in catalogue.colnames:
+                print('WARNING: No column named', column, 'in the catalogue file')
+                continue
+            mask = (catalogue[column] != value)
+            catalogue.remove_rows(mask)
+        else:
+            print('WARNING: Do not understand selection criterion', criterion)
+            catalogue.meta[column+'_sel'] = criterion
+    Nsubcat = len(catalogue)
+    print(Nsubcat, 'objects were selected from the catalogue')
 
-# Sub-select binary table based on selection criteria
-for criterion in selection:
-    print('Selecting by', criterion)
-    if '_gt_' in criterion:
-        column, value = criterion.split('_gt_')
-        if column not in catalogue.colnames:
-            print('WARNING: No column named', column, 'in the catalogue file')
-            continue
-        mask = (catalogue[column] < float(value))
-        catalogue.remove_rows(mask)
-    elif '_ls_' in criterion:
-        column, value = criterion.split('_ls_')
-        if column not in catalogue.colnames:
-            print('WARNING: No column named', column, 'in the catalogue file')
-            continue
-        mask = (catalogue[column] > float(value))
-        catalogue.remove_rows(mask)
-    elif '=' in criterion:
-        column, value = criterion.split('=')
-        if column not in catalogue.colnames:
-            print('WARNING: No column named', column, 'in the catalogue file')
-            continue
-        mask = (catalogue[column] != value)
-        catalogue.remove_rows(mask)
-    else:
-        print('WARNING: Do not understand selection criterion', criterion)
-    catalogue.meta[column+'_sel'] = criterion
-Nsubcat = len(catalogue)
-print(Nsubcat, 'objects were selected from the catalogue')
+    # Random
+    Nrandom = len(random)
+    rmask = np.ones(Nrandom)
 
-# Random
-Nrandom = len(random)
-rmask = np.ones(Nrandom)
+    for criterion in selection:
+        if '_gt_' in criterion:
+            column, value = criterion.split('_gt_')
+            if column not in random.colnames:
+                print('WARNING: No column named', column, 'in the random file')
+                continue
+            rmask = np.logical_and(rmask, random[column] > float(value))
+        elif '_ls_' in criterion:
+            column, value = criterion.split('_ls_')
+            if column not in random.colnames:
+                print('WARNING: No column named', column, 'in the random file')
+                continue
+            rmask = np.logical_and(rmask, random[column] < float(value))
+        elif '=' in criterion:
+            column, value = criterion.split('=')
+            if column not in random.colnames:
+                print('WARNING: No column named', column, 'in the random file')
+                continue
+            rmask = np.logical_and(rmask, random[column] != value)
+        else:
+            print('WARNING: Do not understand selection criterion', criterion)
 
-for criterion in selection:
-    if '_gt_' in criterion:
-        column, value = criterion.split('_gt_')
-        if column not in random.colnames:
-            print('WARNING: No column named', column, 'in the random file')
-            continue
-        rmask = np.logical_and(rmask, random[column] > float(value))
-    elif '_ls_' in criterion:
-        column, value = criterion.split('_ls_')
-        if column not in random.colnames:
-            print('WARNING: No column named', column, 'in the random file')
-            continue
-        rmask = np.logical_and(rmask, random[column] < float(value))
-    elif '=' in criterion:
-        column, value = criterion.split('=')
-        if column not in random.colnames:
-            print('WARNING: No column named', column, 'in the random file')
-            continue
-        rmask = np.logical_and(rmask, random[column] != value)
-    else:
-        print('WARNING: Do not understand selection criterion', criterion)   
+    Nrand_selected = np.sum(rmask)
+    # IDs of selected objects
+    rand_selected = random['ID']
+    rand_selected = rand_selected[rmask]
+    print(Nrand_selected, 'objects were selected from the random file')
 
-Nrand_selected = np.sum(rmask)
-# IDs of selected objects
-rand_selected = random['ID']
-rand_selected = rand_selected[rmask]
-print(Nrand_selected, 'objects were selected from the random file')
+    # Ideal 
+    Nideal = len(ideal)
+    imask = np.ones(Nideal)
 
-# Ideal 
-Nideal = len(ideal)
-imask = np.ones(Nideal)
+    for criterion in selection:
+        if '_gt_' in criterion:
+            column, value = criterion.split('_gt_')
+            if column not in ideal.colnames:
+                print('WARNING: No column named', column, 'in the ideal file')
+                continue
+            imask = np.logical_and(imask, ideal[column] > float(value))
+        elif '_ls_' in criterion:
+            column, value = criterion.split('_ls_')
+            if column not in ideal.colnames:
+                print('WARNING: No column named', column, 'in the ideal file')
+                continue
+            imask = np.logical_and(imask, ideal[column] < float(value))
+        elif '=' in criterion:
+            column, value = criterion.split('=')
+            if column not in ideal.colnames:
+                print('WARNING: No column named', column, 'in the ideal file')
+                continue
+            imask = np.logical_and(imask, ideal[column] != value)
+        else:
+            print('WARNING: Do not understand selection criterion', criterion)   
 
-for criterion in selection:
-    if '_gt_' in criterion:
-        column, value = criterion.split('_gt_')
-        if column not in ideal.colnames:
-            print('WARNING: No column named', column, 'in the ideal file')
-            continue
-        imask = np.logical_and(imask, ideal[column] > float(value))
-    elif '_ls_' in criterion:
-        column, value = criterion.split('_ls_')
-        if column not in ideal.colnames:
-            print('WARNING: No column named', column, 'in the ideal file')
-            continue
-        imask = np.logical_and(imask, ideal[column] < float(value))
-    elif '=' in criterion:
-        column, value = criterion.split('=')
-        if column not in ideal.colnames:
-            print('WARNING: No column named', column, 'in the ideal file')
-            continue
-        imask = np.logical_and(imask, ideal[column] != value)
-    else:
-        print('WARNING: Do not understand selection criterion', criterion)   
+    Nideal_selected = np.sum(imask)
+    # IDs of selected objects
+    ideal_selected = ideal['ID']
+    ideal_selected = ideal_selected[imask]
+    print(Nideal_selected, 'objects were selected from the ideal file')
 
-Nideal_selected = np.sum(imask)
-# IDs of selected objects
-ideal_selected = ideal['ID']
-ideal_selected = ideal_selected[imask]
-print(Nideal_selected, 'objects were selected from the ideal file')
+    # Number of objects that in selected random that are also in selected ideal
+    Nrand_ideal = len(set(rand_selected).intersection(ideal_selected))
 
-# Number of objects that in selected random that are also in selected ideal
-Nrand_ideal = len(set(rand_selected).intersection(ideal_selected))
+    # Compute completeness
+    completeness = Nrand_ideal/Nideal_selected
+    print('Completeness =', completeness)
 
-# Compute completeness
-completeness = Nrand_ideal/Nideal_selected
-print('Completeness =', completeness)
+    # Purity
+    purity = Nrand_ideal/Nrand_selected
+    print('Purity =', purity)
 
-# Purity
-purity = Nrand_ideal/Nrand_selected
-print('Purity =', purity)
+    # Save the subsample
+    catalogue.meta['purity'] = purity
+    catalogue.meta['complete'] = completeness
+    catalogue.write(output)
 
-# Save the subsample
-catalogue.meta['purity'] = purity
-catalogue.meta['complete'] = completeness
-catalogue.write(output)
+    return
+
+if __name__ == '__main__':
+    catalogue = argv[1]
+    random = argv[2]
+    ideal = argv[3]
+    output = argv[4]
+    selection = argv[5:]
+    SampleSelect(catalogue,random,ideal,output,selection)
