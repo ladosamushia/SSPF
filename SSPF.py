@@ -79,7 +79,7 @@ def SampleSelect(catalogue,random,ideal,output,*selection):
             if column not in catalogue.colnames:
                 print('WARNING: No column named', column, 'in the catalogue file')
                 continue
-            mask = (catalogue[column] != value)
+            mask = (catalogue[column] == value)
             catalogue.remove_rows(mask)
         else:
             print('WARNING: Do not understand selection criterion', criterion)
@@ -114,6 +114,7 @@ def SampleSelect(catalogue,random,ideal,output,*selection):
             print('WARNING: Do not understand selection criterion', criterion)
 
     Nrand_selected = np.sum(rmask)
+    print(rmask)
     # IDs of selected objects
     rand_selected = random['ID']
     rand_selected = rand_selected[rmask]
@@ -155,11 +156,11 @@ def SampleSelect(catalogue,random,ideal,output,*selection):
     Nrand_ideal = len(set(rand_selected).intersection(ideal_selected))
 
     # Compute completeness
-    completeness = Nrand_ideal/Nideal_selected
+    completeness = Nrand_ideal/float(Nideal_selected)
     print('Completeness =', completeness)
 
     # Purity
-    purity = Nrand_ideal/Nrand_selected
+    purity = Nrand_ideal/float(Nrand_selected)
     print('Purity =', purity)
 
     # Save the subsample
