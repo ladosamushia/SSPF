@@ -79,7 +79,7 @@ def SampleSelect(catalogue,random,ideal,output,*selection):
             if column not in catalogue.colnames:
                 print('WARNING: No column named', column, 'in the catalogue file')
                 continue
-            mask = (catalogue[column] == value)
+            mask = (catalogue[column] != value)
             catalogue.remove_rows(mask)
         else:
             print('WARNING: Do not understand selection criterion', criterion)
