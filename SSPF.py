@@ -109,7 +109,7 @@ def SampleSelect(catalogue,random,ideal,output,*selection):
             if column not in random.colnames:
                 print('WARNING: No column named', column, 'in the random file')
                 continue
-            rmask = np.logical_and(rmask, random[column] != value)
+            rmask = np.logical_and(rmask, random[column] == value)
         else:
             print('WARNING: Do not understand selection criterion', criterion)
 
@@ -141,7 +141,7 @@ def SampleSelect(catalogue,random,ideal,output,*selection):
             if column not in ideal.colnames:
                 print('WARNING: No column named', column, 'in the ideal file')
                 continue
-            imask = np.logical_and(imask, ideal[column] != value)
+            imask = np.logical_and(imask, ideal[column] == value)
         else:
             print('WARNING: Do not understand selection criterion', criterion)   
 
